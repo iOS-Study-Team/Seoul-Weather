@@ -1,5 +1,5 @@
 //
-//  SimpleMapViewController.swift
+//  MapViewController.swift
 //  Seoul-Weather
 //
 //  Created by KimSuyoung on 12/06/2018.
@@ -21,29 +21,27 @@ class MapViewController: UIViewController {
     
     @IBOutlet weak var svgView = UIView()
     
+    @IBAction func touchUpButton(_ sender: UIButton) {
+        
+        if choiceType == MapType.Dtype {
+            updateMarkerState()
+        } else {
+            updateImageState()
+        }
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         colorizeView()
-        loadMap()
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        //        loadMap()
-        
-        var items = [MTMapPOIItem]()
-        items.append(mpoiItem(name: "하나", latitude: 37.4981688, longitude: 127.0484572))
-        items.append(mpoiItem(name: "둘", latitude: 37.4987963, longitude: 127.0415946))
-        items.append(mpoiItem(name: "셋", latitude: 37.5025612, longitude: 127.0415946))
-        items.append(mpoiItem(name: "넷", latitude: 37.5037539, longitude: 127.0426469))
-        //위 부분은 viewDidLoad()에서 수행해도 괜찮습니다
-        
-        daumView.addPOIItems(items)
-        daumView.fitAreaToShowAllPOIItems()  // 모든 마커가 보이게 카메라 위치/줌 조정
+        loadMap()
     }
-    
+
     private func colorizeView() {
         guard choiceType == MapType.Btype else { return }
         let themeColor = UIColor.init(hexString: "#696969")
@@ -52,97 +50,16 @@ class MapViewController: UIViewController {
     }
     
     private func loadMap() {
-        guard choiceType != MapType.Dtype else {
+        if choiceType == MapType.Dtype {
             loadDaumMap()
-            return
+        } else {
+            loadSVGMap()
         }
-        
-        let type = choiceType==MapType.Atype ? "mSeoul_type_A" : "mSeoul_type_B"
-        let htmlPath = Bundle.main.path(forResource: type, ofType: "html")
-        let htmlUrl = URL(fileURLWithPath: htmlPath!, isDirectory: false)
-        wkwebView.frame = CGRect(x: 0, y: 0, width: 0, height: 0)
-        wkwebView.navigationDelegate = self
-        wkwebView.loadFileURL(htmlUrl, allowingReadAccessTo: htmlUrl)
-        wkwebView.scrollView.showsVerticalScrollIndicator = false
-    }
-    
-    private func loadDaumMap() {
-        daumView.frame = CGRect(x: 0, y: 0, width: 0, height: 0)
-        daumView.delegate = self
-        daumView.baseMapType = .standard
-        
-        let mapPointGeo = MTMapPointGeo(latitude: 37.526804306404337, longitude: 126.96612433919596)
-        let mapPoint = MTMapPoint(geoCoord: mapPointGeo)
-        daumView.setMapCenter(mapPoint, zoomLevel: 7, animated: true)
-        view.addSubview(daumView)
-        view.insertSubview(daumView, at: 0)
-        
-        addMarker()
-        
-    }
-    
-    private func addMarker() {
-        
-        var items = [MTMapPOIItem]()
-        
-        
-        let point = MTMapPOIItem()
-        point.itemName = "시청역"
-        point.mapPoint = MTMapPoint(geoCoord: MTMapPointGeo(latitude: 37.526804306404337, longitude: 126.96612433919596))
-        point.markerType = .redPin
-        point.markerSelectedType = .redPin
-        point.showAnimationType = .noAnimation
-        point.draggable = true
-        point.tag = 153
-        point.customImageAnchorPointOffset = MTMapImageOffset(offsetX: 30, offsetY: 0)
-        items.append(point)
-        
-        //
-        point.itemName = "시청역"
-        point.mapPoint = MTMapPoint(geoCoord: MTMapPointGeo(latitude: 37.537229, longitude: 127.005515))
-        point.markerType = .redPin
-        point.showAnimationType = .noAnimation
-        point.draggable = true
-        point.tag = 153
-        point.customImageAnchorPointOffset = MTMapImageOffset(offsetX: 30, offsetY: 0)
-        items.append(point)
-        
-        daumView.addPOIItems(items)
-        let i = MTMapLocationMarkerItem()
-        print(i)
-        daumView.updateCurrentLocationMarker(i)
-        daumView.fitAreaToShowAllPOIItems()
-    }
-    
-    //    Swift
-    //
-    //    func poiItem(name: String, latitude: Double, longitude: Double) -> MTMapPOIItem {
-    //        let item = MTMapPOIItem()
-    //        item.itemName = name
-    //        item.markerType = .redPin
-    //        item.markerSelectedType = .redPin
-    //        item.mapPoint = MTMapPoint(geoCoord: .init(latitude: latitude, longitude: longitude))
-    //        item.showAnimationType = .noAnimation
-    //        item.customImageAnchorPointOffset = .init(offsetX: 30, offsetY: 0)    // 마커 위치 조정
-    //
-    //        return item
-    //    }
-    //
-    //
-    func mpoiItem(name: String, latitude: Double, longitude: Double) -> MTMapPOIItem {
-        let item = MTMapPOIItem()
-        item.itemName = name
-        item.markerType = .redPin
-        item.markerSelectedType = .redPin
-        item.mapPoint = MTMapPoint(geoCoord: .init(latitude: latitude, longitude: longitude))
-        item.showAnimationType = .noAnimation
-        item.customImageAnchorPointOffset = .init(offsetX: 30, offsetY: 0)    // 마커 위치 조정
-        
-        return item
     }
     
 }
 
+// Web View 관련 메소드
 extension MapViewController: WKNavigationDelegate {
     
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -156,26 +73,141 @@ extension MapViewController: WKNavigationDelegate {
         view.addSubview(wkwebView)
     }
     
+    private func loadSVGMap() {
+        let type = choiceType==MapType.Atype ? "mSeoul_type_A" : "mSeoul_type_B"
+        let htmlPath = Bundle.main.path(forResource: type, ofType: "html")
+        let htmlUrl = URL(fileURLWithPath: htmlPath!, isDirectory: false)
+        wkwebView.frame = CGRect(x: 0, y: 0, width: 0, height: 0)
+        wkwebView.navigationDelegate = self
+        wkwebView.loadFileURL(htmlUrl, allowingReadAccessTo: htmlUrl)
+        wkwebView.scrollView.showsVerticalScrollIndicator = false
+        
+    }
+    
+    private func updateImageState() {
+        
+        for id in 0...24 {
+            let imageState = arc4random_uniform(5)
+            let script = "region_click(\(id), \(imageState));"
+            wkwebView.evaluateJavaScript(script) { (result, error) in
+                if error != nil {
+                    print(error.debugDescription)
+                }
+            }
+        }
+        
+    }
     
 }
 
+// Daum Map View 관련 메소드
 extension MapViewController: MTMapViewDelegate {
     
-    func mapView(_ mapView: MTMapView!, finishedMapMoveAnimation mapCenterPoint: MTMapPoint!) {
-        guard let svgframe = svgView?.frame else {
+    func mapView(_ mapView: MTMapView!, openAPIKeyAuthenticationResultCode resultCode: Int32, resultMessage: String!) {
+        if daumView.frame == svgView?.frame {
             return
         }
-        daumView.frame = svgframe
+        
+        if let svgframe = svgView?.frame {
+            daumView.frame = svgframe
+        }
     }
     
-    func mapView(_ mapView: MTMapView!, openAPIKeyAuthenticationResultCode resultCode: Int32, resultMessage: String!) {
+    
+    private func loadDaumMap() {
+        daumView.frame = CGRect(x: 0, y: 0, width: 0, height: 0)
+        daumView.delegate = self
+        daumView.baseMapType = .standard
+        daumView.setZoomLevel(6, animated: false)
         view.addSubview(daumView)
+        
+        loadGuData()
     }
     
+    private func loadGuData() {
+        addMarker(name: "중구", latitude: 37.557335, longitude: 126.997985)
+        addMarker(name: "강서구", latitude: 37.55844, longitude: 126.824859)
+        addMarker(name: "서대문구", latitude: 37.574997, longitude: 126.941155)
+        addMarker(name: "은평구", latitude: 37.616431, longitude: 126.929119)
+        addMarker(name: "강북구", latitude: 37.64071, longitude: 127.013272)
+        addMarker(name: "성북구", latitude: 37.602917, longitude: 127.019697)
+        addMarker(name: "종로구", latitude: 37.592128, longitude: 126.97942)
+        addMarker(name: "동대문구", latitude: 37.579132, longitude: 127.057221)
+        addMarker(name: "광진구", latitude: 37.543059, longitude: 127.088351)
+        addMarker(name: "송파구", latitude: 37.502168, longitude: 127.118003)
+        addMarker(name: "강남구", latitude: 37.493712, longitude: 127.065334)
+        addMarker(name: "서초구", latitude: 37.47074, longitude: 127.033245)
+        addMarker(name: "동작구", latitude: 37.496075, longitude: 126.953734)
+        addMarker(name: "영등포구", latitude: 37.519739, longitude: 126.912303)
+        addMarker(name: "용산구", latitude: 37.528582, longitude: 126.981987)
+        addMarker(name: "성동구", latitude: 37.54824, longitude: 127.043114)
+        addMarker(name: "양천구", latitude: 37.52194, longitude: 126.857526)
+        addMarker(name: "구로구", latitude: 37.491581, longitude: 126.858351)
+        addMarker(name: "관악구", latitude: 37.46457, longitude: 126.947435)
+        addMarker(name: "금천구", latitude: 37.457775, longitude: 126.902894)
+        addMarker(name: "도봉구", latitude: 37.66633, longitude: 127.034471)
+        addMarker(name: "중랑구", latitude: 37.595194, longitude: 127.095157)
+        addMarker(name: "마포구", latitude: 37.556708, longitude: 126.910326)
+        addMarker(name: "노원구", latitude: 37.649734, longitude: 127.077134)
+        addMarker(name: "강동구", latitude: 37.547522, longitude: 127.149107)
+        
+    }
+    
+    private func addMarker(name: String, latitude: Double, longitude: Double) {
+        
+        let point = MTMapPOIItem()
+        point.itemName = name
+        point.mapPoint = MTMapPoint(geoCoord: MTMapPointGeo(latitude: latitude, longitude: longitude))
+        point.markerType = .customImage
+        point.showAnimationType = .noAnimation
+        point.draggable = false
+        point.showDisclosureButtonOnCalloutBalloon = false
+        point.tag = daumView.poiItems.count
+        
+        let image = UIImage(named: "small_check")
+        point.customImage = image
+        daumView.add(point)
+        daumView.fitAreaToShowAllPOIItems()
+    }
+    
+    private func updateMarkerState() {
+        
+        for point in daumView.poiItems {
+            guard let point: MTMapPOIItem = point as? MTMapPOIItem else {
+                return
+            }
+            daumView.remove(point)
+            
+            let state = Int(arc4random_uniform(5))
+            let name = getMarkerStateName(num: state)
+            let image = UIImage(named: "small_"+name)
+            point.customImage = image
+            daumView.add(point)
+        }
+        
+    }
+    
+    private func getMarkerStateName(num: Int) -> String {
+        switch num {
+        case 0:
+            return "good"
+        case 1:
+            return "normal"
+        case 2:
+            return "bad"
+        case 3:
+            return "toobad"
+        case 4:
+            return "check"
+        default:
+            fatalError("marker 상태를 확인해주세요")
+        }
+    }
     
 }
 
 extension UIColor {
+    
     convenience init(hexString: String, alpha: CGFloat = 1.0) {
         let hexString: String = hexString.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         let scanner = Scanner(string: hexString)
@@ -193,6 +225,7 @@ extension UIColor {
         let blue  = CGFloat(b) / 255.0
         self.init(red:red, green:green, blue:blue, alpha:alpha)
     }
+    
     func toHexString() -> String {
         var r:CGFloat = 0
         var g:CGFloat = 0
@@ -202,4 +235,5 @@ extension UIColor {
         let rgb:Int = (Int)(r*255)<<16 | (Int)(g*255)<<8 | (Int)(b*255)<<0
         return String(format:"#%06x", rgb)
     }
+    
 }
